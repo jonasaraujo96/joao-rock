@@ -497,6 +497,26 @@ stages.forEach((st, si) => {
   pickerGrid.appendChild(pcol);
 });
 
+const STORAGE_KEY = 'joaoRock2026_selectedShows';
+
+function saveSelection(){
+  const checked = Array.from(document.querySelectorAll('.showcheck:checked')).map(cb => cb.dataset.key);
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(checked));
+  }catch(e){}
+}
+
+function loadSelection(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const keys = new Set(JSON.parse(raw));
+    document.querySelectorAll('.showcheck').forEach(cb => {
+      if(keys.has(cb.dataset.key)) cb.checked = true;
+    });
+  }catch(e){}
+}
+
 function applyFilter(){
   const checked = document.querySelectorAll('.showcheck:checked');
   const checkedKeys = new Set(Array.from(checked).map(cb => cb.dataset.key));
@@ -514,6 +534,8 @@ function applyFilter(){
     const col = document.getElementById('col-' + si);
     if(col) col.style.display = (!anyChecked || stageHasVisible) ? '' : 'none';
   });
+
+  saveSelection();
 }
 
 pickerGrid.addEventListener('change', (e) => {
@@ -524,6 +546,9 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   document.querySelectorAll('.showcheck:checked').forEach(cb => cb.checked = false);
   applyFilter();
 });
+
+loadSelection();
+applyFilter();
 </script>
 </body>
 </html>
