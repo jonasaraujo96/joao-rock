@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>João Rock 2026 — Agenda comparativa</title>
+<style>
+  :root{
+    --bg: #121212;
+    --panel: #1b1b1b;
+    --line: rgba(255,255,255,0.08);
+    --text: #f2f2f0;
+    --text-mute: #9a9a95;
+    --hour-w: 56px;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap{
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px 16px 48px;
+    width: 100%;
+  }
+  .top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  h1{
+    font-size: clamp(18px, 4.5vw, 26px);
+    font-weight:800;
+    letter-spacing:-0.02em;
+    margin:0;
+  }
+  .sub{
+    color:var(--text-mute);
+    font-size: clamp(11px, 2.6vw, 13px);
+    margin:0 0 18px;
+  }
+  .legend{
+    display:flex;
+    gap:10px 14px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .legend span{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size: clamp(10px, 2.4vw, 12px);
+    color:var(--text-mute);
+    white-space:nowrap;
+  }
+  .dot{
+    width:9px; height:9px; border-radius:2px; display:inline-block;
+  }
+  .scrollzone{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:10px;
+    border-radius:14px;
+    scroll-snap-type: x proximity;
+  }
+  .grid{
+    display:flex;
+    width: max-content;
+  }
+  .hourcol{
+    width:var(--hour-w);
+    flex-shrink:0;
+    position:sticky;
+    left:0;
+    z-index:6;
+    background:var(--bg);
+  }
+  .hourcol::after{
+    content:'';
+    position:absolute;
+    top:0; right:0; bottom:0;
+    width:1px;
+    background:var(--line);
+  }
+  .hourcol .stagehead{
+    height:56px;
+  }
+  .hourmark{
+    position:absolute;
+    left:0; right:0;
+    font-size:11px;
+    color:var(--text-mute);
+    transform: translateY(-6px);
+    text-align:right;
+    padding-right:6px;
+  }
+  .stage{
+    flex:1;
+    width: 150px;
+    min-width:150px;
+    position:relative;
+    border-left:1px solid var(--line);
+    scroll-snap-align:start;
+  }
+  .stagehead{
+    height:56px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    padding:6px 8px;
+    text-align:center;
+    position:sticky;
+    top:0;
+    z-index:5;
+    border-bottom:1px solid var(--line);
+  }
+  .stagehead .name{
+    font-size:13px;
+    font-weight:800;
+    line-height:1.15;
+  }
+  .stagehead .tag{
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    opacity:.75;
+    margin-top:2px;
+  }
+  .track{
+    position:relative;
+  }
+  .hline{
+    position:absolute;
+    left:0; right:0;
+    border-top:1px solid var(--line);
+  }
+  .show{
+    position:absolute;
+    left:4px; right:4px;
+    border-radius:8px;
+    padding:6px 8px 5px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.12);
+  }
+  .show .art{
+    font-size:12px;
+    font-weight:800;
+    line-height:1.15;
+    margin:0;
+  }
+  .show .tm{
+    font-size:10px;
+    opacity:.85;
+    margin-top:2px;
+  }
+  .gate{
+    position:absolute;
+    left:4px; right:4px;
+    border-radius:8px;
+    background:rgba(255,255,255,0.06);
+    border:1px dashed rgba(255,255,255,0.18);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    color:var(--text-mute);
+  }
+  .p-pink   { background:#4a1b28; }
+  .p-pink .show   { background:#E4003D; color:#fff; }
+  .p-green  { background:#0f2b23; }
+  .p-green .show  { background:#0f5c46; color:#eaf7f0; }
+  .p-purple { background:#241a3d; }
+  .p-purple .show { background:#7a5cff; color:#fff; }
+  .p-coral  { background:#3d160c; }
+  .p-coral .show  { background:#ff5a3c; color:#fff; }
+  .p-amber  { background:#2b2400; }
+  .p-amber .show  { background:#ffce1f; color:#241d00; }
+
+  .note{
+    margin-top:18px;
+    font-size:12px;
+    color:var(--text-mute);
+    line-height:1.6;
+  }
+  .swipehint{
+    display:none;
+    font-size:11px;
+    color:var(--text-mute);
+    margin:0 0 10px;
+    align-items:center;
+    gap:6px;
+  }
+  @media (max-width:640px){
+    :root{ --hour-w: 42px; }
+    .wrap{ padding: 16px 12px 40px; }
+    .stage{ width:132px; min-width:132px; }
+    .stagehead .name{ font-size:11.5px; }
+    .stagehead .tag{ font-size:8px; }
+    .show .art{ font-size:11px; }
+    .show .tm{ font-size:9px; }
+    .hourmark{ font-size:10px; }
+    .swipehint{ display:flex; }
+  }
+  @media (max-width:400px){
+    .stage{ width:118px; min-width:118px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>João Rock 2026 — agenda lado a lado</h1>
+  </div>
+  <p class="sub">Portões abrem 12h30 · role a tabela para o lado para ver os 5 palcos</p>
+  <p class="swipehint">↔ arraste para o lado para ver todos os palcos</p>
+
+  <div class="legend">
+    <span><i class="dot" style="background:#E4003D"></i>João Rock</span>
+    <span><i class="dot" style="background:#0f5c46"></i>Brasil de Norte a Sul</span>
+    <span><i class="dot" style="background:#7a5cff"></i>Aquarela</span>
+    <span><i class="dot" style="background:#ff5a3c"></i>Fortalecendo a Cena</span>
+    <span><i class="dot" style="background:#ffce1f"></i>Eisenrock Station</span>
+  </div>
+
+  <div class="scrollzone">
+    <div class="grid" id="grid">
+      <div class="hourcol" id="hourcol"><div class="stagehead"></div></div>
+    </div>
+  </div>
+
+  <p class="note">Toque/segure em um show não faz nada aqui — é só visualização. Horários de encerramento variam, então chegue com uma folga antes de trocar de palco.</p>
+</div>
+
+<script>
+const START = 0;      // 12:00 in minutes-from-12h
+const END = 810;       // 01:30 in minutes-from-12h
+const PPM = 1.35;       // pixels per minute
+const HOUR_H = 60 * PPM;
+const TOTAL_H = (END - START) * PPM;
+
+function t(h, m){ return (h < 6 ? h + 24 : h) * 60 + m - 12*60; }
+
+const stages = [
+  {
+    key:'p-pink', name:'Palco João Rock', tag:'',
+    shows:[
+      {a:t(14,0), b:t(14,55), name:'Batalha da Aldeia'},
+      {a:t(15,0), b:t(15,30), name:'Vencedora concurso de bandas'},
+      {a:t(15,55), b:t(16,50), name:'Chico Chico'},
+      {a:t(17,0), b:t(17,55), name:'Lagum'},
+      {a:t(18,5), b:t(19,0), name:'Detonautas'},
+      {a:t(19,10), b:t(20,5), name:'Zé Ramalho'},
+      {a:t(20,15), b:t(21,10), name:'Alceu Valença'},
+      {a:t(21,20), b:t(22,15), name:'Os Paralamas do Sucesso'},
+      {a:t(22,25), b:t(23,20), name:'CPM 22'},
+      {a:t(23,30), b:t(24,25), name:'BaianaSystem'},
+      {a:t(24,35), b:t(25,30), name:'Charlie Brown Jr. Acústico (Negra Li e Marcelo Nova)', open:true},
+    ]
+  },
+  {
+    key:'p-green', name:'Palco Brasil', tag:'De norte a sul',
+    shows:[
+      {a:t(13,10), b:t(14,0), name:'School of Rock'},
+      {a:t(15,20), b:t(16,20), name:'Os Tucumanus e Victor Xamã · Região Norte'},
+      {a:t(17,25), b:t(18,20), name:'Nação Zumbi · Região Nordeste'},
+      {a:t(19,25), b:t(20,20), name:'Armandinho · Região Sul'},
+      {a:t(21,25), b:t(22,20), name:'Marcelo D2 convida Rael · Região Sudeste'},
+      {a:t(23,25), b:t(24,20), name:'Raimundos · Região Centro-Oeste'},
+    ]
+  },
+  {
+    key:'p-purple', name:'Palco Aquarela', tag:'',
+    shows:[
+      {a:t(14,25), b:t(15,20), name:'Urias'},
+      {a:t(16,25), b:t(17,20), name:'Rachel Reis'},
+      {a:t(18,25), b:t(19,20), name:'Luedji Luna'},
+      {a:t(20,25), b:t(21,20), name:'Marina Sena'},
+      {a:t(22,25), b:t(23,20), name:'Ana Carolina'},
+    ]
+  },
+  {
+    key:'p-coral', name:'Fortalecendo a Cena', tag:'',
+    shows:[
+      {a:t(13,10), b:t(14,0), name:'School of Rock'},
+      {a:t(15,25), b:t(16,20), name:'AJulliaCosta'},
+      {a:t(17,25), b:t(18,20), name:'Yago OProprio'},
+      {a:t(19,25), b:t(20,20), name:'FBC'},
+      {a:t(21,25), b:t(22,20), name:'Djonga'},
+      {a:t(23,25), b:t(24,20), name:'Criolo'},
+    ]
+  },
+  {
+    key:'p-amber', name:'Eisenrock Station', tag:'',
+    shows:[
+      {a:t(14,0), b:t(15,0), name:'Dupoint'},
+      {a:t(16,0), b:t(17,0), name:'Drenna'},
+      {a:t(17,40), b:t(18,40), name:'Alexia'},
+      {a:t(19,20), b:t(20,20), name:'Giovanna Moraes'},
+      {a:t(21,0), b:t(22,0), name:'Jambu'},
+      {a:t(22,40), b:t(23,40), name:'Rancore'},
+    ]
+  },
+];
+
+const grid = document.getElementById('grid');
+const hourcol = document.getElementById('hourcol');
+hourcol.style.height = (56 + TOTAL_H) + 'px';
+
+for(let m = START; m <= END; m += 60){
+  const div = document.createElement('div');
+  div.className = 'hourmark';
+  div.style.top = (56 + (m-START)*PPM) + 'px';
+  let hh = Math.floor(m/60) + 12;
+  if(hh >= 24) hh -= 24;
+  div.textContent = String(hh).padStart(2,'0') + 'h';
+  hourcol.appendChild(div);
+}
+
+stages.forEach(st => {
+  const col = document.createElement('div');
+  col.className = 'stage ' + st.key;
+
+  const head = document.createElement('div');
+  head.className = 'stagehead';
+  head.innerHTML = '<div class="name">' + st.name + '</div>' + (st.tag ? '<div class="tag">'+st.tag+'</div>' : '');
+  col.appendChild(head);
+
+  const track = document.createElement('div');
+  track.className = 'track';
+  track.style.height = TOTAL_H + 'px';
+
+  for(let m = START; m <= END; m += 60){
+    const hl = document.createElement('div');
+    hl.className = 'hline';
+    hl.style.top = ((m-START)*PPM) + 'px';
+    track.appendChild(hl);
+  }
+
+  st.shows.forEach(s => {
+    const top = (s.a - START) * PPM;
+    const h = Math.max((s.b - s.a) * PPM, 26);
+    const block = document.createElement('div');
+    block.className = 'show';
+    block.style.top = top + 'px';
+    block.style.height = h + 'px';
+    const startH = (Math.floor(s.a/60)+12) % 24;
+    const startM = s.a % 60;
+    const endLabel = s.open ? 'até o fim' : String((Math.floor(s.b/60)+12)%24).padStart(2,'0')+'h'+String(s.b%60).padStart(2,'0');
+    block.innerHTML = '<p class="art">'+s.name+'</p><p class="tm">'+String(startH).padStart(2,'0')+'h'+String(startM).padStart(2,'0')+' – '+endLabel+'</p>';
+    track.appendChild(block);
+  });
+
+  col.appendChild(track);
+  grid.appendChild(col);
+});
+</script>
+</body>
+</html>
