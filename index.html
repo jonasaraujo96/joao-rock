@@ -162,6 +162,23 @@
     opacity:.85;
     margin-top:2px;
   }
+  .show.compact{
+    padding:4px 6px 3px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  .show.compact .art{
+    font-size:10px;
+    line-height:1.1;
+  }
+  .show.compact .tm{
+    font-size:8.5px;
+    margin-top:1px;
+  }
+  .show.tiny .tm{
+    display:none;
+  }
   .gate{
     position:absolute;
     left:4px; right:4px;
@@ -190,6 +207,78 @@
     font-size:12px;
     color:var(--text-mute);
     line-height:1.6;
+  }
+  .picker{
+    margin-top:36px;
+    padding-top:24px;
+    border-top:1px solid var(--line);
+  }
+  .picker-head h2{
+    font-size:18px;
+    font-weight:800;
+    margin:0 0 6px;
+  }
+  .picker-head p{
+    font-size:12.5px;
+    color:var(--text-mute);
+    line-height:1.5;
+    margin:0 0 12px;
+    max-width:560px;
+  }
+  .picker-head button{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text);
+    font-size:12px;
+    padding:7px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    margin-bottom:18px;
+  }
+  .picker-head button:hover{
+    border-color: rgba(255,255,255,0.3);
+  }
+  .picker-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap:16px;
+  }
+  .pcol{
+    border-radius:12px;
+    padding:12px;
+    border:1px solid var(--line);
+  }
+  .pcol-title{
+    font-size:12.5px;
+    font-weight:800;
+    margin:0 0 10px;
+    padding-bottom:8px;
+    border-bottom:1px solid rgba(255,255,255,0.14);
+  }
+  .prow{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    padding:6px 0;
+    cursor:pointer;
+  }
+  .prow input{
+    margin-top:3px;
+    width:15px;
+    height:15px;
+    flex-shrink:0;
+    accent-color:#fff;
+    cursor:pointer;
+  }
+  .prow .plabel{
+    font-size:12.5px;
+    line-height:1.35;
+  }
+  .prow .ptime{
+    display:block;
+    font-size:10.5px;
+    color:var(--text-mute);
+    margin-top:1px;
   }
   .swipehint{
     display:none;
@@ -238,6 +327,15 @@
   </div>
 
   <p class="note">Toque/segure em um show não faz nada aqui — é só visualização. Horários de encerramento variam, então chegue com uma folga antes de trocar de palco.</p>
+
+  <div class="picker">
+    <div class="picker-head">
+      <h2>Escolha o seu roteiro</h2>
+      <p>Marque os shows que você quer ver. Sem nada marcado, a agenda mostra todo mundo. Se um palco ficar sem nenhum show marcado, ele some da agenda.</p>
+      <button type="button" id="clearBtn">Limpar seleção</button>
+    </div>
+    <div class="picker-grid" id="pickerGrid"></div>
+  </div>
 </div>
 
 <script>
@@ -325,9 +423,10 @@ for(let m = START; m <= END; m += 60){
   hourcol.appendChild(div);
 }
 
-stages.forEach(st => {
+stages.forEach((st, si) => {
   const col = document.createElement('div');
   col.className = 'stage ' + st.key;
+  col.id = 'col-' + si;
 
   const head = document.createElement('div');
   head.className = 'stagehead';
@@ -345,11 +444,14 @@ stages.forEach(st => {
     track.appendChild(hl);
   }
 
-  st.shows.forEach(s => {
+  st.shows.forEach((s, shi) => {
     const top = (s.a - START) * PPM;
-    const h = Math.max((s.b - s.a) * PPM, 26);
+    const h = Math.max((s.b - s.a) * PPM, 30);
     const block = document.createElement('div');
     block.className = 'show';
+    block.id = 'block-' + si + '-' + shi;
+    if(h < 48) block.classList.add('compact');
+    if(h < 32) block.classList.add('tiny');
     block.style.top = top + 'px';
     block.style.height = h + 'px';
     const startH = (Math.floor(s.a/60)+12) % 24;
@@ -367,6 +469,61 @@ const scrollzone = document.querySelector('.scrollzone');
 scrollzone.scrollLeft = 0;
 requestAnimationFrame(() => { scrollzone.scrollLeft = 0; });
 window.addEventListener('load', () => { scrollzone.scrollLeft = 0; });
+
+const pickerGrid = document.getElementById('pickerGrid');
+
+stages.forEach((st, si) => {
+  const pcol = document.createElement('div');
+  pcol.className = 'pcol ' + st.key;
+
+  const title = document.createElement('p');
+  title.className = 'pcol-title';
+  title.textContent = st.name;
+  pcol.appendChild(title);
+
+  st.shows.forEach((s, shi) => {
+    const key = si + '-' + shi;
+    const startH = (Math.floor(s.a/60)+12) % 24;
+    const startM = s.a % 60;
+    const endLabel = s.open ? 'até o fim' : String((Math.floor(s.b/60)+12)%24).padStart(2,'0')+'h'+String(s.b%60).padStart(2,'0');
+
+    const row = document.createElement('label');
+    row.className = 'prow';
+    row.innerHTML = '<input type="checkbox" class="showcheck" data-key="'+key+'">' +
+      '<span class="plabel">'+s.name+'<span class="ptime">'+String(startH).padStart(2,'0')+'h'+String(startM).padStart(2,'0')+' – '+endLabel+'</span></span>';
+    pcol.appendChild(row);
+  });
+
+  pickerGrid.appendChild(pcol);
+});
+
+function applyFilter(){
+  const checked = document.querySelectorAll('.showcheck:checked');
+  const checkedKeys = new Set(Array.from(checked).map(cb => cb.dataset.key));
+  const anyChecked = checkedKeys.size > 0;
+
+  stages.forEach((st, si) => {
+    let stageHasVisible = false;
+    st.shows.forEach((s, shi) => {
+      const key = si + '-' + shi;
+      const visible = !anyChecked || checkedKeys.has(key);
+      const block = document.getElementById('block-' + key);
+      if(block) block.style.display = visible ? '' : 'none';
+      if(visible) stageHasVisible = true;
+    });
+    const col = document.getElementById('col-' + si);
+    if(col) col.style.display = (!anyChecked || stageHasVisible) ? '' : 'none';
+  });
+}
+
+pickerGrid.addEventListener('change', (e) => {
+  if(e.target.classList.contains('showcheck')) applyFilter();
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.querySelectorAll('.showcheck:checked').forEach(cb => cb.checked = false);
+  applyFilter();
+});
 </script>
 </body>
 </html>
