@@ -68,6 +68,7 @@
     padding-bottom:10px;
     border-radius:14px;
     scroll-snap-type: x proximity;
+    scroll-padding-left: 0;
   }
   .grid{
     display:flex;
@@ -80,6 +81,7 @@
     left:0;
     z-index:6;
     background:var(--bg);
+    scroll-snap-align:start;
   }
   .hourcol::after{
     content:'';
@@ -360,6 +362,11 @@ stages.forEach(st => {
   col.appendChild(track);
   grid.appendChild(col);
 });
+
+const scrollzone = document.querySelector('.scrollzone');
+scrollzone.scrollLeft = 0;
+requestAnimationFrame(() => { scrollzone.scrollLeft = 0; });
+window.addEventListener('load', () => { scrollzone.scrollLeft = 0; });
 </script>
 </body>
 </html>
