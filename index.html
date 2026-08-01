@@ -73,6 +73,7 @@
   .grid{
     display:flex;
     width: max-content;
+    position:relative;
   }
   .hourcol{
     width:var(--hour-w);
@@ -190,6 +191,43 @@
     justify-content:center;
     font-size:10px;
     color:var(--text-mute);
+  }
+  .now-line{
+    position:absolute;
+    left:0; right:0;
+    height:0;
+    border-top:3px solid #eaff00;
+    box-shadow: 0 0 8px 1px rgba(234,255,0,.9), 0 0 18px rgba(234,255,0,.5);
+    z-index:4;
+    pointer-events:none;
+  }
+  .now-badge{
+    position:absolute;
+    left:0; right:0;
+    transform: translateY(-10px);
+    text-align:right;
+    padding-right:4px;
+    z-index:7;
+    pointer-events:none;
+  }
+  .now-badge span{
+    display:inline-block;
+    background:#eaff00;
+    color:#111;
+    font-size:10px;
+    font-weight:800;
+    padding:2px 5px;
+    border-radius:4px;
+    white-space:nowrap;
+    box-shadow:0 0 8px rgba(234,255,0,.8);
+  }
+  .show.live{
+    box-shadow: 0 0 0 2px #eaff00, 0 0 12px rgba(234,255,0,.8);
+    animation: livePulse 2s ease-in-out infinite;
+  }
+  @keyframes livePulse{
+    0%,100%{ box-shadow:0 0 0 2px #eaff00, 0 0 8px rgba(234,255,0,.6); }
+    50%{ box-shadow:0 0 0 2px #eaff00, 0 0 18px rgba(234,255,0,1); }
   }
   .p-pink   { background:#4a1b28; }
   .p-pink .show   { background:#E4003D; color:#fff; }
@@ -464,6 +502,45 @@ stages.forEach((st, si) => {
   col.appendChild(track);
   grid.appendChild(col);
 });
+
+const nowLine = document.createElement('div');
+nowLine.className = 'now-line';
+nowLine.id = 'nowLine';
+grid.appendChild(nowLine);
+
+const nowBadge = document.createElement('div');
+nowBadge.className = 'now-badge';
+nowBadge.id = 'nowBadge';
+nowBadge.innerHTML = '<span id="nowBadgeText"></span>';
+hourcol.appendChild(nowBadge);
+const nowBadgeText = document.getElementById('nowBadgeText');
+
+function updateNowLine(){
+  const now = new Date();
+  const nowM = t(now.getHours(), now.getMinutes()) + now.getSeconds()/60;
+  const visible = nowM >= START && nowM <= END;
+
+  nowLine.style.display = visible ? '' : 'none';
+  nowBadge.style.display = visible ? '' : 'none';
+
+  if(visible){
+    const top = 56 + (nowM - START) * PPM;
+    nowLine.style.top = top + 'px';
+    nowBadge.style.top = top + 'px';
+    nowBadgeText.textContent = String(now.getHours()).padStart(2,'0') + 'h' + String(now.getMinutes()).padStart(2,'0');
+  }
+
+  stages.forEach((st, si) => {
+    st.shows.forEach((s, shi) => {
+      const block = document.getElementById('block-' + si + '-' + shi);
+      if(!block) return;
+      block.classList.toggle('live', visible && nowM >= s.a && nowM < s.b);
+    });
+  });
+}
+
+updateNowLine();
+setInterval(updateNowLine, 1000);
 
 const scrollzone = document.querySelector('.scrollzone');
 scrollzone.scrollLeft = 0;
