@@ -340,6 +340,12 @@
   @media (max-width:400px){
     .stage{ width:118px; min-width:118px; }
   }
+  .visits{
+    text-align:center;
+    color:var(--text-mute);
+    font-size:11px;
+    margin:24px 0 0;
+  }
 </style>
 </head>
 <body>
@@ -374,8 +380,45 @@
     </div>
     <div class="picker-grid" id="pickerGrid"></div>
   </div>
+
+  <p class="visits" id="visits"></p>
+
+  <!--
+    StatCounter "Visitors Online": crie uma conta grátis em statcounter.com,
+    adicione um projeto pro seu site e cole aqui o código do widget "Visitors
+    Online" (Painel > seu projeto > Widgets > Visitors Online > Get Code).
+    Esse widget é gerado com o project ID/security code da sua conta, então
+    não dá pra deixar pronto sem você ter a conta criada.
+  -->
+  <div id="statcounter-online" style="text-align:center;margin-top:8px;"></div>
 </div>
 
+<script data-goatcounter="https://joao-rock.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+
+<!-- Default Statcounter code for Joao Rock
+https://jonasaraujo96.github.io/joao-rock/ -->
+<script type="text/javascript">
+var sc_project=13339308;
+var sc_invisible=1;
+var sc_security="c66920af";
+</script>
+<script type="text/javascript" src="https://statcounter.com/counter/counter.js" async></script>
+<noscript><div class="statcounter"><a title="web statistics"
+href="https://statcounter.com/" target="_blank"><img class="statcounter"
+src="https://c.statcounter.com/13339308/0/c66920af/0/" alt="web statistics"
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+
+<script>
+fetch('https://joao-rock.goatcounter.com/counter/' + encodeURIComponent(location.pathname) + '.json')
+  .then(r => r.json())
+  .then(data => {
+    if(!data || typeof data.count === 'undefined') return;
+    document.getElementById('visits').textContent = data.count + ' visitas';
+  })
+  .catch(() => {});
+</script>
 <script>
 const START = 0;      // 12:00 in minutes-from-12h
 const END = 810;       // 01:30 in minutes-from-12h
